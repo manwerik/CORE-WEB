@@ -3115,12 +3115,11 @@ body, html, a, button, input, select, textarea, .frequency-card, .btn-audio-guid
   animation: core-light-sweep 14s linear infinite, core-scan-drift 9s linear infinite;
 }
 
-.app-header,
-#app-container,
-.preloader {
+#app-container {
   position: relative;
   z-index: 10;
 }
+
 
 .zone-view::before,
 .zone-view::after {
@@ -3259,4 +3258,12 @@ body, html, a, button, input, select, textarea, .frequency-card, .btn-audio-guid
   opacity: 1 !important;
   transform: none !important;
   filter: none !important;
+}
+
+/* Keep navigation pinned above the animated background */
+.app-header {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  z-index: 1000;
 }
