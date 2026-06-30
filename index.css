@@ -3232,3 +3232,31 @@ body, html, a, button, input, select, textarea, .frequency-card, .btn-audio-guid
   .ambient-motion-canvas { opacity: 0.54; }
   .kinetic-light-field { opacity: 0.28; }
 }
+
+/* Text and image reveal refinements */
+.motion-word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  line-height: 1.18;
+}
+
+.motion-word > span {
+  display: inline-block;
+  will-change: transform, opacity, filter;
+}
+
+.motion-gsap-ready .narrative-side-image,
+.motion-gsap-ready .preview-booth-frame,
+.motion-gsap-ready .merch-preview-box,
+.motion-gsap-ready .cube-viewport {
+  clip-path: inset(0 0 0 0);
+}
+
+.motion-gsap-ready .zone-narrative-section,
+.motion-gsap-ready .zone-sandbox-section,
+.motion-gsap-ready .nucleus-footer {
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
+}

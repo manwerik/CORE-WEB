@@ -1584,81 +1584,93 @@ document.addEventListener('DOMContentLoaded', () => {
   const MotionLayer = (() => {
     const hasGsap = () => typeof window.gsap !== 'undefined';
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const animatedZones = new WeakSet();
-    let revealObserver = null;
+    const animatedFloaters = new WeakSet();
+
+    function splitTextElement(el) {
+      if (!el || el.dataset.motionSplit === 'true') return Array.from(el.querySelectorAll('.motion-word > span'));
+      const original = el.textContent.trim();
+      if (!original) return [];
+      el.dataset.motionOriginal = original;
+      el.dataset.motionSplit = 'true';
+      el.innerHTML = original.split(/\s+/).map((word) => `<span class="motion-word"><span>${word}</span></span>`).join(' ');
+      return Array.from(el.querySelectorAll('.motion-word > span'));
+    }
+
+    function splitZoneText(zone) {
+      const textTargets = zone.querySelectorAll('.hero-title, .hero-subtitle, .subtitle-manifesto, .section-tag, .manifesto-paragraph, .highlight-text, .question-text, .narrative-text-panel h2, .narrative-text-panel p, .sandbox-header h3, .sandbox-header p, .collective-dashboard-data h2, .narrative-meta-p');
+      return Array.from(textTargets).flatMap(splitTextElement);
+    }
 
     function getZoneTargets(zone) {
       return {
         hero: zone.querySelector('.zone-hero'),
-        heroItems: zone.querySelectorAll('.logo-hero-container, .subtitle-manifesto, .manifesto-paragraph, .highlight-text, .question-text, .hero-text > *'),
-        panels: zone.querySelectorAll('.narrative-text-panel, .narrative-side-image, .sandbox-container, .collective-dashboard-data, .cube-3d-section'),
-        cards: zone.querySelectorAll('.frequency-card, .style-option-card, .merch-item, .narrative-point, .stat-bubble, .audio-guide-player-card'),
-        media: zone.querySelectorAll('.side-illustrative-img, .merch-img, .vr-room-image, .hero-logo, .preloader-logo')
+        logo: zone.querySelectorAll('.logo-hero-container, .hero-logo'),
+        words: splitZoneText(zone),
+        images: zone.querySelectorAll('.narrative-side-image, .side-illustrative-img, .preview-booth-frame, .vr-room-image, .merch-preview-box, .merch-img, .cube-viewport'),
+        panels: zone.querySelectorAll('.narrative-text-panel, .sandbox-container, .collective-dashboard-data, .cube-3d-section, .ticket-download-box'),
+        cards: zone.querySelectorAll('.frequency-card, .style-option-card, .merch-item, .narrative-point, .stat-bubble, .audio-guide-player-card, .input-group, .card-perspective')
       };
     }
 
-    function animateZone(zone, force = false) {
+    function animateZone(zone) {
       if (!zone || reducedMotion || !hasGsap()) return;
-      if (animatedZones.has(zone) && !force) return;
-      animatedZones.add(zone);
-
       const targets = getZoneTargets(zone);
-      const tl = window.gsap.timeline({ defaults: { ease: 'power3.out' } });
+      window.gsap.killTweensOf([targets.words, targets.images, targets.panels, targets.cards, targets.logo]);
 
+      const tl = window.gsap.timeline({ defaults: { ease: 'power3.out' } });
       tl.fromTo(targets.hero,
-        { scale: 1.04, filter: 'brightness(0.72) saturate(0.9)' },
-        { scale: 1, filter: 'brightness(1) saturate(1)', duration: 1.2 },
+        { scale: 1.035, filter: 'brightness(0.68) saturate(0.88)' },
+        { scale: 1, filter: 'brightness(1) saturate(1)', duration: 1.15 },
         0
       );
 
-      tl.fromTo(targets.heroItems,
-        { autoAlpha: 0, y: 34, filter: 'blur(10px)' },
-        { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: 0.85, stagger: 0.08 },
+      tl.fromTo(targets.logo,
+        { autoAlpha: 0, y: 30, scale: 0.88, rotateZ: -2, filter: 'blur(12px)' },
+        { autoAlpha: 1, y: 0, scale: 1, rotateZ: 0, filter: 'blur(0px)', duration: 0.9, stagger: 0.08 },
+        0.05
+      );
+
+      tl.fromTo(targets.words,
+        { yPercent: 110, rotateX: -58, autoAlpha: 0, filter: 'blur(7px)' },
+        { yPercent: 0, rotateX: 0, autoAlpha: 1, filter: 'blur(0px)', duration: 0.72, stagger: { each: 0.012, from: 'start' } },
         0.12
       );
 
+      tl.fromTo(targets.images,
+        { autoAlpha: 0, clipPath: 'inset(0 100% 0 0)', scale: 1.08, filter: 'blur(12px) saturate(0.75)' },
+        { autoAlpha: 1, clipPath: 'inset(0 0% 0 0)', scale: 1, filter: 'blur(0px) saturate(1)', duration: 1.05, stagger: 0.09 },
+        0.24
+      );
+
       tl.fromTo(targets.panels,
-        { autoAlpha: 0, y: 42, filter: 'blur(8px)' },
-        { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: 0.9, stagger: 0.12 },
-        0.28
+        { autoAlpha: 0, y: 34, filter: 'blur(8px)' },
+        { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: 0.82, stagger: 0.09 },
+        0.38
       );
 
       tl.fromTo(targets.cards,
-        { autoAlpha: 0, y: 24, rotateX: -5, transformOrigin: '50% 80%' },
-        { autoAlpha: 1, y: 0, rotateX: 0, duration: 0.75, stagger: 0.045 },
-        0.42
+        { autoAlpha: 0, y: 28, scale: 0.96, rotateX: -8, transformOrigin: '50% 100%' },
+        { autoAlpha: 1, y: 0, scale: 1, rotateX: 0, duration: 0.68, stagger: 0.045 },
+        0.48
       );
 
-      window.gsap.to(targets.media, {
-        y: -8,
-        duration: 3.8,
+      bindContinuousMotion(zone);
+    }
+
+    function bindContinuousMotion(zone) {
+      if (!zone || animatedFloaters.has(zone)) return;
+      animatedFloaters.add(zone);
+      const floatingMedia = zone.querySelectorAll('.side-illustrative-img, .merch-img, .vr-room-image, .hero-logo');
+      window.gsap.to(floatingMedia, {
+        y: -10,
+        scale: 1.018,
+        duration: 4.2,
         ease: 'sine.inOut',
         repeat: -1,
         yoyo: true,
-        stagger: 0.18
+        stagger: 0.22
       });
-    }
 
-    function bindRevealObserver() {
-      if (reducedMotion || !hasGsap() || revealObserver) return;
-      revealObserver = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          window.gsap.to(entry.target, {
-            autoAlpha: 1,
-            y: 0,
-            filter: 'blur(0px)',
-            duration: 0.75,
-            ease: 'power3.out'
-          });
-          revealObserver.unobserve(entry.target);
-        });
-      }, { threshold: 0.18 });
-
-      document.querySelectorAll('.zone-narrative-section, .zone-sandbox-section, .nucleus-footer').forEach((el) => {
-        window.gsap.set(el, { autoAlpha: 0, y: 38, filter: 'blur(8px)' });
-        revealObserver.observe(el);
-      });
     }
 
     function bindPointerParallax() {
@@ -1668,21 +1680,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!zone) return;
         const x = (event.clientX / window.innerWidth - 0.5) * 2;
         const y = (event.clientY / window.innerHeight - 0.5) * 2;
-
         window.gsap.to(zone.querySelectorAll('.narrative-side-image, .preview-booth-frame, .cube-viewport, .card-perspective'), {
-          x: x * 10,
-          y: y * 8,
-          rotateY: x * 1.8,
-          rotateX: -y * 1.4,
+          x: x * 8,
+          y: y * 6,
+          rotateY: x * 1.4,
+          rotateX: -y * 1.1,
           duration: 0.8,
-          ease: 'power2.out',
-          overwrite: 'auto'
-        });
-
-        window.gsap.to(zone.querySelectorAll('.bg-orb, .ambient-glow'), {
-          x: x * -18,
-          y: y * -14,
-          duration: 1.2,
           ease: 'power2.out',
           overwrite: 'auto'
         });
@@ -1692,12 +1695,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function bindMagneticButtons() {
       if (reducedMotion || !hasGsap()) return;
       document.querySelectorAll('.btn, .btn-audio-guide-toggle, .frequency-card, .style-option-card').forEach((el) => {
-        el.addEventListener('pointerenter', () => {
-          window.gsap.to(el, { y: -3, scale: 1.015, duration: 0.25, ease: 'power2.out' });
-        });
-        el.addEventListener('pointerleave', () => {
-          window.gsap.to(el, { x: 0, y: 0, scale: 1, duration: 0.35, ease: 'elastic.out(1, 0.45)' });
-        });
+        el.addEventListener('pointerenter', () => window.gsap.to(el, { y: -3, scale: 1.015, duration: 0.25, ease: 'power2.out' }));
+        el.addEventListener('pointerleave', () => window.gsap.to(el, { x: 0, y: 0, scale: 1, duration: 0.35, ease: 'elastic.out(1, 0.45)' }));
         el.addEventListener('pointermove', (event) => {
           const rect = el.getBoundingClientRect();
           const dx = event.clientX - rect.left - rect.width / 2;
@@ -1715,10 +1714,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       document.documentElement.classList.add('motion-gsap-ready');
       window.gsap.config({ nullTargetWarn: false });
-      bindRevealObserver();
       bindPointerParallax();
       bindMagneticButtons();
-      animateZone(zoneViews[state.currentStep], true);
+      animateZone(zoneViews[state.currentStep]);
     }
 
     return { init, animateZone };
