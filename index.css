@@ -3082,3 +3082,153 @@ body, html, a, button, input, select, textarea, .frequency-card, .btn-audio-guid
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ==========================================================
+   Always-On Ambient Backgrounds
+   ========================================================== */
+:root {
+  --motion-hue: var(--active-color-hue);
+}
+
+.ambient-motion-canvas,
+.kinetic-light-field {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+
+.ambient-motion-canvas {
+  z-index: 1;
+  opacity: 0.78;
+  mix-blend-mode: screen;
+}
+
+.kinetic-light-field {
+  z-index: 2;
+  opacity: 0.46;
+  background:
+    linear-gradient(115deg, transparent 0 38%, hsla(var(--motion-hue), 100%, 58%, 0.10) 46%, transparent 58% 100%),
+    repeating-linear-gradient(90deg, transparent 0 42px, hsla(var(--motion-hue), 100%, 65%, 0.025) 43px 45px, transparent 46px 90px);
+  background-size: 220% 220%, 180px 100%;
+  animation: core-light-sweep 14s linear infinite, core-scan-drift 9s linear infinite;
+}
+
+.app-header,
+#app-container,
+.preloader {
+  position: relative;
+  z-index: 10;
+}
+
+.zone-view::before,
+.zone-view::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 700ms ease;
+}
+
+.zone-view::before {
+  z-index: 3;
+  background:
+    radial-gradient(circle at 18% 18%, hsla(var(--motion-hue), 100%, 58%, 0.14), transparent 28%),
+    radial-gradient(circle at 82% 76%, hsla(calc(var(--motion-hue) + 100), 95%, 56%, 0.10), transparent 34%);
+  animation: core-orb-drift 11s ease-in-out infinite alternate;
+}
+
+.zone-view::after {
+  z-index: 4;
+  background: linear-gradient(180deg, rgba(3,5,9,0.20), rgba(3,5,9,0.02) 42%, rgba(3,5,9,0.26));
+}
+
+.zone-view.active::before,
+.zone-view.active::after {
+  opacity: 1;
+}
+
+.zone-view.active .zone-hero::before,
+.zone-view.active .zone-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.zone-view.active .zone-hero::before {
+  z-index: 1;
+  background:
+    linear-gradient(110deg, transparent 0%, hsla(var(--motion-hue), 100%, 64%, 0.14) 42%, transparent 56%),
+    repeating-linear-gradient(0deg, transparent 0 18px, rgba(255,255,255,0.018) 19px 20px);
+  background-size: 230% 100%, 100% 42px;
+  animation: core-hero-energy-sweep 8s ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+
+.zone-view.active .zone-hero::after {
+  z-index: 2;
+  background: radial-gradient(circle at var(--motion-x, 50%) var(--motion-y, 45%), hsla(var(--motion-hue), 100%, 58%, 0.12), transparent 34%);
+  animation: core-hero-pulse 5s ease-in-out infinite;
+}
+
+.zone-view.active .zone-hero > * {
+  position: relative;
+  z-index: 5;
+}
+
+.zone-view.active .narrative-side-image,
+.zone-view.active .preview-booth-frame,
+.zone-view.active .cube-viewport,
+.zone-view.active .merch-preview-box,
+.zone-view.active .canvas-frame,
+.zone-view.active .oscilloscope-frame {
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.42),
+    0 0 34px hsla(var(--motion-hue), 100%, 58%, 0.12);
+  animation: core-panel-breathe 6s ease-in-out infinite;
+}
+
+.zone-view.active .hero-logo,
+.zone-view.active .header-logo,
+.zone-view.active .preloader-logo {
+  filter: drop-shadow(0 0 18px hsla(var(--motion-hue), 100%, 58%, 0.42));
+}
+
+@keyframes core-light-sweep {
+  0% { background-position: 145% 50%, 0 0; }
+  100% { background-position: -65% 50%, 180px 0; }
+}
+
+@keyframes core-scan-drift {
+  0% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(-18px, 10px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes core-orb-drift {
+  from { transform: translate3d(-18px, -10px, 0) scale(1); filter: hue-rotate(0deg); }
+  to { transform: translate3d(22px, 18px, 0) scale(1.04); filter: hue-rotate(24deg); }
+}
+
+@keyframes core-hero-energy-sweep {
+  0%, 100% { background-position: 130% 0, 0 0; opacity: 0.42; }
+  50% { background-position: -40% 0, 0 24px; opacity: 0.72; }
+}
+
+@keyframes core-hero-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.68; transform: scale(1.04); }
+}
+
+@keyframes core-panel-breathe {
+  0%, 100% { box-shadow: 0 18px 48px rgba(0, 0, 0, 0.42), 0 0 28px hsla(var(--motion-hue), 100%, 58%, 0.10); }
+  50% { box-shadow: 0 22px 58px rgba(0, 0, 0, 0.50), 0 0 48px hsla(var(--motion-hue), 100%, 58%, 0.20); }
+}
+
+@media (max-width: 760px) {
+  .ambient-motion-canvas { opacity: 0.54; }
+  .kinetic-light-field { opacity: 0.28; }
+}

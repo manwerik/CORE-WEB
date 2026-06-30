@@ -108,6 +108,240 @@ document.addEventListener('DOMContentLoaded', () => {
 
   runPreloader();
 
+  // ==========================================================================
+  // AMBIENT MOTION BACKGROUND
+  // ==========================================================================
+  const AmbientMotion = (() => {
+    const canvas = document.getElementById('ambient-motion-canvas');
+    if (!canvas) return { init() {}, setZone() {} };
+
+    const ctx = canvas.getContext('2d');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const zoneThemes = [
+      { hue: 24, density: 58, speed: 0.18, link: 126, mode: 'grid' },
+      { hue: 202, density: 46, speed: 0.16, link: 112, mode: 'threshold' },
+      { hue: 315, density: 72, speed: 0.24, link: 132, mode: 'pigment' },
+      { hue: 168, density: 64, speed: 0.34, link: 92, mode: 'wave' },
+      { hue: 270, density: 54, speed: 0.20, link: 118, mode: 'portal' },
+      { hue: 44, density: 82, speed: 0.22, link: 150, mode: 'nucleus' }
+    ];
+
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+    let particles = [];
+    let rafId = null;
+    let pointer = { x: 0.5, y: 0.5, active: false };
+    let theme = zoneThemes[0];
+    let targetTheme = zoneThemes[0];
+    let time = 0;
+
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 1.75);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      seedParticles();
+    }
+
+    function seedParticles() {
+      const count = Math.round(targetTheme.density * Math.min(Math.max(width / 1440, 0.75), 1.35));
+      particles = Array.from({ length: count }, (_, i) => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        base: Math.random() * 360,
+        radius: Math.random() * 2.4 + 0.8,
+        vx: (Math.random() - 0.5) * targetTheme.speed,
+        vy: (Math.random() - 0.5) * targetTheme.speed,
+        pulse: Math.random() * Math.PI * 2,
+        lane: i % 6
+      }));
+    }
+
+    function setZone(stepIndex) {
+      targetTheme = zoneThemes[stepIndex] || zoneThemes[0];
+      document.documentElement.style.setProperty('--motion-hue', targetTheme.hue);
+      seedParticles();
+    }
+
+    function lerp(a, b, n) {
+      return a + (b - a) * n;
+    }
+
+    function blendTheme() {
+      theme = {
+        hue: lerp(theme.hue, targetTheme.hue, 0.035),
+        density: lerp(theme.density, targetTheme.density, 0.035),
+        speed: lerp(theme.speed, targetTheme.speed, 0.035),
+        link: lerp(theme.link, targetTheme.link, 0.035),
+        mode: targetTheme.mode
+      };
+    }
+
+    function drawGrid() {
+      if (theme.mode !== 'grid' && theme.mode !== 'nucleus') return;
+      const spacing = theme.mode === 'nucleus' ? 78 : 96;
+      ctx.save();
+      ctx.globalAlpha = theme.mode === 'nucleus' ? 0.11 : 0.07;
+      ctx.strokeStyle = `hsl(${theme.hue}, 95%, 62%)`;
+      ctx.lineWidth = 1;
+      const drift = (time * 18) % spacing;
+      for (let x = -spacing; x < width + spacing; x += spacing) {
+        ctx.beginPath();
+        ctx.moveTo(x + drift, 0);
+        ctx.lineTo(x - drift * 0.25, height);
+        ctx.stroke();
+      }
+      for (let y = -spacing; y < height + spacing; y += spacing) {
+        ctx.beginPath();
+        ctx.moveTo(0, y + drift * 0.35);
+        ctx.lineTo(width, y - drift);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawWaveField() {
+      if (theme.mode !== 'wave') return;
+      ctx.save();
+      ctx.lineWidth = 1.2;
+      for (let row = 0; row < 7; row++) {
+        ctx.beginPath();
+        const yBase = height * (0.18 + row * 0.11);
+        for (let x = 0; x <= width; x += 18) {
+          const y = yBase + Math.sin(x * 0.012 + time * 2.4 + row) * (16 + row * 2);
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = `hsla(${theme.hue + row * 9}, 95%, 64%, ${0.18 - row * 0.012})`;
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawPortal() {
+      if (theme.mode !== 'portal') return;
+      ctx.save();
+      ctx.translate(width / 2, height / 2);
+      for (let i = 0; i < 9; i++) {
+        const radius = 120 + i * 54 + Math.sin(time * 1.2 + i) * 10;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, radius * 1.6, radius * 0.46, time * 0.08 + i * 0.18, 0, Math.PI * 2);
+        ctx.strokeStyle = `hsla(${theme.hue + i * 8}, 95%, 64%, ${0.12 - i * 0.008})`;
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawLinks() {
+      ctx.save();
+      ctx.lineWidth = 1;
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const a = particles[i];
+          const b = particles[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist > theme.link) continue;
+          ctx.strokeStyle = `hsla(${theme.hue + a.lane * 7}, 95%, 62%, ${(1 - dist / theme.link) * 0.18})`;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
+
+    function updateParticles() {
+      const pullX = pointer.active ? pointer.x * width : width / 2;
+      const pullY = pointer.active ? pointer.y * height : height / 2;
+      particles.forEach((p) => {
+        const angle = p.base + time * (0.18 + theme.speed) + p.lane;
+        p.x += p.vx + Math.cos(angle) * 0.18;
+        p.y += p.vy + Math.sin(angle * 0.82) * 0.16;
+        const dx = pullX - p.x;
+        const dy = pullY - p.y;
+        const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
+        if (dist < 240) {
+          const force = (1 - dist / 240) * 0.42;
+          p.x -= (dx / dist) * force;
+          p.y -= (dy / dist) * force;
+        }
+        if (p.x < -30) p.x = width + 30;
+        if (p.x > width + 30) p.x = -30;
+        if (p.y < -30) p.y = height + 30;
+        if (p.y > height + 30) p.y = -30;
+      });
+    }
+
+    function drawParticles() {
+      ctx.save();
+      particles.forEach((p) => {
+        const pulse = (Math.sin(time * 2 + p.pulse) + 1) * 0.5;
+        const radius = p.radius + pulse * 1.8;
+        const alpha = theme.mode === 'pigment' ? 0.34 : 0.24;
+        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius * 7);
+        gradient.addColorStop(0, `hsla(${theme.hue + p.lane * 12}, 100%, 68%, ${alpha})`);
+        gradient.addColorStop(1, `hsla(${theme.hue + p.lane * 12}, 100%, 58%, 0)`);
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, radius * 7, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+
+    function drawVignette() {
+      const gradient = ctx.createRadialGradient(width * 0.5, height * 0.45, 0, width * 0.5, height * 0.5, Math.max(width, height) * 0.72);
+      gradient.addColorStop(0, `hsla(${theme.hue}, 95%, 48%, 0.10)`);
+      gradient.addColorStop(0.48, 'rgba(0,0,0,0)');
+      gradient.addColorStop(1, 'rgba(0,0,0,0.54)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+    }
+
+    function render() {
+      time += 0.016;
+      blendTheme();
+      ctx.clearRect(0, 0, width, height);
+      drawVignette();
+      drawGrid();
+      drawWaveField();
+      drawPortal();
+      updateParticles();
+      drawLinks();
+      drawParticles();
+      rafId = requestAnimationFrame(render);
+    }
+
+    function init() {
+      if (reducedMotion) return;
+      resize();
+      window.addEventListener('resize', resize, { passive: true });
+      window.addEventListener('pointermove', (event) => {
+        pointer.x = event.clientX / window.innerWidth;
+        pointer.y = event.clientY / window.innerHeight;
+        pointer.active = true;
+        document.documentElement.style.setProperty('--motion-x', `${Math.round(pointer.x * 100)}%`);
+        document.documentElement.style.setProperty('--motion-y', `${Math.round(pointer.y * 100)}%`);
+      }, { passive: true });
+      window.addEventListener('pointerleave', () => {
+        pointer.active = false;
+      });
+      if (!rafId) render();
+    }
+
+    return { init, setZone };
+  })();
+  AmbientMotion.init();
+
   function navigateToStep(stepIndex) {
     const clampedStep = Math.max(0, Math.min(stepIndex, zoneViews.length - 1));
     state.currentStep = clampedStep;
@@ -128,6 +362,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     onEnterZone(clampedStep);
+    if (typeof MotionLayer !== 'undefined') {
+      MotionLayer.animateZone(zoneViews[clampedStep], true);
+    }
     AmbientSynth.updateTheme(stepIndex);
   }
 
@@ -160,6 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function onEnterZone(stepIndex) {
     document.documentElement.style.setProperty('--active-color-hue', state.colorHue);
+    AmbientMotion.setZone(stepIndex);
 
     if (stepIndex === 0) {
       initManifestoCanvas();
