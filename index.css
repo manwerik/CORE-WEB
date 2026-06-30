@@ -2951,3 +2951,134 @@ body, html, a, button, input, select, textarea, .frequency-card, .btn-audio-guid
 #zone-nucleus .sandbox-container {
   max-width: 1200px;
 }
+
+/* ==========================================================
+   Cinematic Motion Layer
+   ========================================================== */
+.motion-gsap-ready .zone-hero,
+.motion-gsap-ready .narrative-side-image,
+.motion-gsap-ready .preview-booth-frame,
+.motion-gsap-ready .cube-viewport,
+.motion-gsap-ready .card-perspective {
+  will-change: transform, filter, opacity;
+  transform-style: preserve-3d;
+}
+
+.motion-gsap-ready .hero-text > *,
+.motion-gsap-ready .manifesto-paragraph,
+.motion-gsap-ready .highlight-text,
+.motion-gsap-ready .question-text,
+.motion-gsap-ready .narrative-text-panel,
+.motion-gsap-ready .sandbox-container,
+.motion-gsap-ready .frequency-card,
+.motion-gsap-ready .style-option-card,
+.motion-gsap-ready .merch-item,
+.motion-gsap-ready .audio-guide-player-card {
+  will-change: transform, filter, opacity;
+}
+
+.zone-view.active .hero-title,
+.zone-view.active .subtitle-manifesto {
+  animation: core-title-breathe 5.5s ease-in-out infinite;
+}
+
+.zone-view.active .section-tag,
+.zone-view.active .preloader-status,
+.zone-view.active .color-hex-tag,
+.zone-view.active .badge {
+  animation: core-signal-flicker 3.2s steps(2, end) infinite;
+}
+
+.zone-view.active .side-illustrative-img,
+.zone-view.active .merch-img,
+.zone-view.active .vr-room-image {
+  transition: filter 420ms ease, transform 420ms ease;
+}
+
+.zone-view.active .narrative-side-image:hover .side-illustrative-img,
+.zone-view.active .merch-preview-box:hover .merch-img,
+.zone-view.active .preview-booth-frame:hover .vr-room-image {
+  filter: saturate(1.16) contrast(1.08) brightness(1.04);
+}
+
+.frequency-card,
+.style-option-card,
+.btn,
+.btn-audio-guide-toggle,
+.merch-preview-box {
+  position: relative;
+  overflow: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.btn::before,
+.btn-audio-guide-toggle::before,
+.frequency-card::before,
+.style-option-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.13) 42%, transparent 72%);
+  opacity: 0;
+  transform: translateX(-55%);
+  pointer-events: none;
+}
+
+.btn:hover::before,
+.btn-audio-guide-toggle:hover::before,
+.frequency-card:hover::before,
+.style-option-card:hover::before {
+  opacity: 1;
+  animation: core-sheen 850ms ease forwards;
+}
+
+.motion-basic .zone-view.active .hero-text,
+.motion-basic .zone-view.active .manifesto-wrapper,
+.motion-basic .zone-view.active .narrative-container,
+.motion-basic .zone-view.active .sandbox-container {
+  animation: core-basic-rise 700ms ease both;
+}
+
+@keyframes core-title-breathe {
+  0%, 100% {
+    text-shadow: 0 0 18px rgba(255,255,255,0.08), 0 0 26px hsla(var(--active-color-hue), 100%, 55%, 0.22);
+  }
+  50% {
+    text-shadow: 0 0 24px rgba(255,255,255,0.13), 0 0 42px hsla(var(--active-color-hue), 100%, 55%, 0.42);
+  }
+}
+
+@keyframes core-signal-flicker {
+  0%, 88%, 100% { opacity: 1; }
+  90% { opacity: 0.72; }
+  94% { opacity: 0.92; }
+}
+
+@keyframes core-sheen {
+  from { transform: translateX(-65%); }
+  to { transform: translateX(65%); }
+}
+
+@keyframes core-basic-rise {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}
