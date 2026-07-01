@@ -1597,14 +1597,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function splitZoneText(zone) {
-      const textTargets = zone.querySelectorAll('.hero-title, .hero-subtitle, .subtitle-manifesto, .section-tag, .manifesto-paragraph, .highlight-text, .question-text, .narrative-text-panel h2, .narrative-text-panel p, .sandbox-header h3, .sandbox-header p, .collective-dashboard-data h2, .narrative-meta-p');
+      const textTargets = zone.querySelectorAll('.manifesto-paragraph, .highlight-text, .question-text, .narrative-text-panel h2, .narrative-text-panel p, .sandbox-header h3, .sandbox-header p, .collective-dashboard-data h2, .narrative-meta-p');
       return Array.from(textTargets).flatMap(splitTextElement);
     }
 
     function getZoneTargets(zone) {
       return {
         hero: zone.querySelector('.zone-hero'),
-        logo: zone.querySelectorAll('.logo-hero-container, .hero-logo'),
+        logo: zone.querySelectorAll('.logo-hero-container, .hero-logo, .hero-title, .hero-subtitle, .section-tag, .scroll-indicator-mouse'),
         words: splitZoneText(zone),
         images: zone.querySelectorAll('.narrative-side-image, .side-illustrative-img, .preview-booth-frame, .vr-room-image, .merch-preview-box, .merch-img, .cube-viewport'),
         panels: zone.querySelectorAll('.narrative-text-panel, .sandbox-container, .collective-dashboard-data, .cube-3d-section, .ticket-download-box'),
