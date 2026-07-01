@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
   'use strict';
 
   const state = {
@@ -129,6 +129,7 @@
 
     onEnterZone(clampedStep);
     AmbientSynth.updateTheme(stepIndex);
+    refreshRevealsForActiveZone();
   }
 
   // Bind step dots click
@@ -1403,6 +1404,78 @@
     });
   });
 
+  // ========================================================================== 
+  // CONTROLLED CONTENT REVEALS
+  // ========================================================================== 
+  let revealObserver = null;
+
+  const revealSelectors = [
+    '.zone-narrative-section .narrative-text-panel > *',
+    '.zone-narrative-section .narrative-side-image',
+    '.zone-sandbox-section .sandbox-header',
+    '.zone-sandbox-section .concept-sandbox',
+    '.zone-sandbox-section .sandbox-cta-container',
+    '.frequency-card',
+    '.style-card',
+    '.merch-item',
+    '.nucleus-dashboard > *'
+  ];
+
+  function prepareRevealTargets() {
+    const targets = Array.from(document.querySelectorAll(revealSelectors.join(', ')))
+      .filter((element) => !element.closest('.zone-hero'));
+
+    targets.forEach((element, index) => {
+      if (!element.classList.contains('reveal-prep')) {
+        element.classList.add('reveal-prep');
+        element.style.setProperty('--reveal-delay', `${Math.min(index % 5, 4) * 90}ms`);
+
+        if (element.matches('.narrative-side-image, .merch-item')) {
+          element.classList.add('reveal-image');
+        } else if (element.matches('.narrative-text-panel > *')) {
+          element.classList.add('reveal-left');
+        } else if (element.matches('.concept-sandbox, .nucleus-dashboard > *')) {
+          element.classList.add('reveal-right');
+        }
+      }
+
+      if (revealObserver) revealObserver.observe(element);
+    });
+  }
+
+  function refreshRevealsForActiveZone() {
+    if (!revealObserver) return;
+    prepareRevealTargets();
+
+    const activeZone = document.querySelector('.zone-view.active');
+    if (!activeZone || activeZone.id === 'zone-manifesto') return;
+
+    activeZone.querySelectorAll('.reveal-prep').forEach((element) => {
+      element.classList.remove('is-visible');
+      revealObserver.unobserve(element);
+      revealObserver.observe(element);
+    });
+  }
+
+  function initContentReveals() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+        }
+      });
+    }, {
+      threshold: 0.16,
+      rootMargin: '0px 0px -8% 0px'
+    });
+
+    prepareRevealTargets();
+    refreshRevealsForActiveZone();
+  }
+
+  initContentReveals();
   // ==========================================================================
   // CUSTOM PRO CURSOR ENGINE
   // ==========================================================================
