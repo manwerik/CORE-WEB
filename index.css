@@ -3267,3 +3267,29 @@ body, html, a, button, input, select, textarea, .frequency-card, .btn-audio-guid
   left: 0;
   z-index: 1000;
 }
+
+/* Restore original full-width hero banners */
+.zone-hero {
+  width: 100% !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+  overflow: hidden;
+}
+
+.hero-text {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.zone-view.active .zone-hero::before,
+.zone-view.active .zone-hero::after {
+  content: none !important;
+  display: none !important;
+}
+
+.zone-view.active .zone-hero > * {
+  position: relative;
+  z-index: 10;
+}

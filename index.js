@@ -1618,11 +1618,8 @@ document.addEventListener('DOMContentLoaded', () => {
       window.gsap.killTweensOf([targets.words, targets.images, targets.panels, targets.cards, targets.logo]);
 
       const tl = window.gsap.timeline({ defaults: { ease: 'power3.out' } });
-      tl.fromTo(targets.hero,
-        { scale: 1.035, filter: 'brightness(0.68) saturate(0.88)' },
-        { scale: 1, filter: 'brightness(1) saturate(1)', duration: 1.15 },
-        0
-      );
+      if (targets.hero) window.gsap.set(targets.hero, { clearProps: 'transform,filter,clipPath' });
+
 
       tl.fromTo(targets.logo,
         { autoAlpha: 0, y: 30, scale: 0.88, rotateZ: -2, filter: 'blur(12px)' },
