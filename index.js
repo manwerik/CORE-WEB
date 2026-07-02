@@ -108,6 +108,114 @@ document.addEventListener('DOMContentLoaded', () => {
 
   runPreloader();
 
+  // ==========================================================================
+  // AMBIENT PARTICLE FIELD
+  // ==========================================================================
+  const AmbientParticles = {
+    canvas: document.getElementById('ambient-particles-canvas'),
+    ctx: null,
+    particles: [],
+    hue: state.colorHue,
+    raf: null,
+    reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+
+    init() {
+      if (!this.canvas || this.reducedMotion) return;
+      this.ctx = this.canvas.getContext('2d');
+      this.resize();
+      this.seed();
+      window.addEventListener('resize', () => {
+        this.resize();
+        this.seed();
+      });
+      this.animate();
+    },
+
+    resize() {
+      const ratio = Math.min(window.devicePixelRatio || 1, 1.6);
+      this.canvas.width = Math.floor(window.innerWidth * ratio);
+      this.canvas.height = Math.floor(window.innerHeight * ratio);
+      this.canvas.style.width = `${window.innerWidth}px`;
+      this.canvas.style.height = `${window.innerHeight}px`;
+      if (this.ctx) this.ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    },
+
+    seed() {
+      const area = window.innerWidth * window.innerHeight;
+      const count = Math.max(34, Math.min(78, Math.floor(area / 26000)));
+      this.particles = Array.from({ length: count }, () => this.createParticle(true));
+    },
+
+    createParticle(randomizePosition = false) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 0.08 + Math.random() * 0.22;
+      return {
+        x: randomizePosition ? Math.random() * window.innerWidth : -20,
+        y: randomizePosition ? Math.random() * window.innerHeight : Math.random() * window.innerHeight,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        radius: 0.8 + Math.random() * 1.8,
+        alpha: 0.22 + Math.random() * 0.42,
+        pulse: Math.random() * Math.PI * 2
+      };
+    },
+
+    setHue(hue) {
+      this.hue = Number.isFinite(hue) ? hue : this.hue;
+    },
+
+    animate() {
+      if (!this.ctx) return;
+      const ctx = this.ctx;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      ctx.clearRect(0, 0, width, height);
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+
+      this.particles.forEach((particle, index) => {
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+        particle.pulse += 0.018;
+
+        if (particle.x < -30) particle.x = width + 30;
+        if (particle.x > width + 30) particle.x = -30;
+        if (particle.y < -30) particle.y = height + 30;
+        if (particle.y > height + 30) particle.y = -30;
+
+        const glow = particle.alpha + Math.sin(particle.pulse) * 0.08;
+        const radius = particle.radius + Math.sin(particle.pulse) * 0.45;
+        ctx.beginPath();
+        ctx.fillStyle = `hsla(${this.hue}, 100%, 62%, ${glow})`;
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = `hsla(${this.hue}, 100%, 58%, 0.55)`;
+        ctx.arc(particle.x, particle.y, Math.max(radius, 0.6), 0, Math.PI * 2);
+        ctx.fill();
+
+        for (let next = index + 1; next < this.particles.length; next += 1) {
+          const other = this.particles[next];
+          const dx = particle.x - other.x;
+          const dy = particle.y - other.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < 118) {
+            ctx.beginPath();
+            ctx.strokeStyle = `hsla(${this.hue}, 100%, 60%, ${(1 - distance / 118) * 0.12})`;
+            ctx.lineWidth = 0.6;
+            ctx.moveTo(particle.x, particle.y);
+            ctx.lineTo(other.x, other.y);
+            ctx.stroke();
+          }
+        }
+      });
+
+      ctx.restore();
+      this.raf = requestAnimationFrame(() => this.animate());
+    }
+  };
+
+  AmbientParticles.init();
+
   function navigateToStep(stepIndex) {
     const clampedStep = Math.max(0, Math.min(stepIndex, zoneViews.length - 1));
     state.currentStep = clampedStep;
@@ -161,6 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function onEnterZone(stepIndex) {
     document.documentElement.style.setProperty('--active-color-hue', state.colorHue);
+    AmbientParticles.setHue(state.colorHue);
 
     if (stepIndex === 0) {
       initManifestoCanvas();
@@ -483,6 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       
       document.documentElement.style.setProperty('--active-color-hue', state.colorHue);
+      AmbientParticles.setHue(state.colorHue);
     });
   }
 
@@ -1099,6 +1209,8 @@ document.addEventListener('DOMContentLoaded', () => {
       state.frequency = null;
       state.style = null;
       state.canvasInjected = false;
+      document.documentElement.style.setProperty('--active-color-hue', state.colorHue);
+      AmbientParticles.setHue(state.colorHue);
 
       if (aliasInput) aliasInput.value = '';
       cardAliasDisplay.textContent = 'ANÓNIMO';

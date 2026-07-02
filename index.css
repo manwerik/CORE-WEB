@@ -77,6 +77,19 @@ html, body {
   opacity: 0.8;
 }
 
+
+/* AMBIENT PARTICLE FIELD */
+.ambient-particles-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 12;
+  opacity: 0.42;
+  mix-blend-mode: screen;
+}
+
 .ambient-glow {
   position: fixed;
   top: 50%;
@@ -3025,6 +3038,10 @@ body, html, a, button, input, select, textarea, .frequency-card, .btn-audio-guid
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .ambient-particles-canvas {
+    display: none;
+  }
+
   .reveal-prep,
   .reveal-prep.reveal-image,
   .reveal-prep.reveal-left,
