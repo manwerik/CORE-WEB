@@ -2823,6 +2823,52 @@ body, html, a, button, input, select, textarea, .frequency-card, .btn-audio-guid
   filter: blur(0px) hue-rotate(185deg) saturate(220%) brightness(1.1);
 }
 
+
+/* GENERATIVE VR WORLD */
+.vr-world-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0.42;
+  filter: blur(16px) brightness(0.55) saturate(0.85);
+  transform: scale(1.045);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.camera-simulation-container.vr-active .vr-world-canvas {
+  opacity: 1;
+  filter: blur(0) brightness(1) saturate(1.1);
+  transform: scale(1);
+}
+
+.camera-simulation-container.vr-active.filter-comic .vr-world-canvas {
+  filter: contrast(1.35) saturate(1.45) brightness(1.02);
+}
+
+.camera-simulation-container.vr-active.filter-retro .vr-world-canvas {
+  filter: contrast(1.12) saturate(0.9) sepia(0.18) brightness(0.92);
+}
+
+.camera-simulation-container.vr-active.filter-sci-fi .vr-world-canvas {
+  filter: contrast(1.2) saturate(1.65) brightness(1.1);
+}
+
+.camera-simulation-container.vr-mode-simulation::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 38%, transparent 0 36%, rgba(0, 0, 0, 0.55) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.camera-simulation-container.vr-active::before {
+  opacity: 0.45;
+}
+
 /* Goggles Overlay trigger button */
 .vr-goggles-overlay {
   position: relative;

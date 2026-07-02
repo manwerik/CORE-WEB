@@ -1078,6 +1078,225 @@ document.addEventListener('DOMContentLoaded', () => {
   const vrGogglesTrigger = document.getElementById('vr-goggles-trigger');
   const hudVrBtnRemove = document.getElementById('hud-vr-btn-remove');
 
+  // ========================================================================== 
+  // GENERATIVE VR WORLD
+  // ========================================================================== 
+  const WorldPortal = {
+    canvas: document.getElementById('vr-world-canvas'),
+    ctx: null,
+    style: 'comic',
+    raf: null,
+    time: 0,
+    reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+
+    init() {
+      if (!this.canvas) return;
+      this.ctx = this.canvas.getContext('2d');
+      this.resize();
+      window.addEventListener('resize', () => this.resize());
+      this.animate();
+    },
+
+    resize() {
+      if (!this.canvas) return;
+      const parent = this.canvas.parentElement;
+      const ratio = Math.min(window.devicePixelRatio || 1, 1.75);
+      const width = parent ? parent.clientWidth : 900;
+      const height = parent ? parent.clientHeight : 380;
+      this.canvas.width = Math.max(1, Math.floor(width * ratio));
+      this.canvas.height = Math.max(1, Math.floor(height * ratio));
+      this.canvas.style.width = `${width}px`;
+      this.canvas.style.height = `${height}px`;
+      if (this.ctx) this.ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    },
+
+    setStyle(style) {
+      this.style = style || 'comic';
+    },
+
+    animate() {
+      if (!this.ctx) return;
+      this.time += this.reducedMotion ? 0.006 : 0.018;
+      this.draw();
+      this.raf = requestAnimationFrame(() => this.animate());
+    },
+
+    palette() {
+      if (this.style === 'retro') {
+        return { skyA: '#120622', skyB: '#001b1f', sun: '#ff2ea6', line: '#33ffe7', accent: '#ffd21f', shade: '#07020d' };
+      }
+      if (this.style === 'sci-fi') {
+        return { skyA: '#02091d', skyB: '#001f2b', sun: '#00f0ff', line: '#5d7cff', accent: '#9dfffa', shade: '#030712' };
+      }
+      return { skyA: '#12010e', skyB: '#1a072e', sun: '#ffdf2e', line: '#ff1e8a', accent: '#37f6ff', shade: '#070106' };
+    },
+
+    draw() {
+      const ctx = this.ctx;
+      const w = this.canvas.clientWidth || 900;
+      const h = this.canvas.clientHeight || 380;
+      const p = this.palette();
+      const t = this.time;
+
+      const sky = ctx.createLinearGradient(0, 0, 0, h);
+      sky.addColorStop(0, p.skyA);
+      sky.addColorStop(0.55, p.skyB);
+      sky.addColorStop(1, p.shade);
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, h);
+
+      this.drawStars(ctx, w, h, p, t);
+      this.drawWorld(ctx, w, h, p, t);
+      this.drawStructures(ctx, w, h, p, t);
+      this.drawStylePass(ctx, w, h, p, t);
+    },
+
+    drawStars(ctx, w, h, p, t) {
+      ctx.save();
+      for (let i = 0; i < 80; i += 1) {
+        const x = (Math.sin(i * 91.7) * 0.5 + 0.5) * w;
+        const y = (Math.sin(i * 37.3) * 0.5 + 0.5) * h * 0.62;
+        const pulse = 0.25 + Math.sin(t * 1.7 + i) * 0.18;
+        ctx.fillStyle = `rgba(255,255,255,${pulse})`;
+        ctx.fillRect(x, y, i % 7 === 0 ? 2 : 1, i % 5 === 0 ? 2 : 1);
+      }
+      ctx.restore();
+    },
+
+    drawWorld(ctx, w, h, p, t) {
+      const horizon = h * 0.56;
+      const sunX = w * (0.5 + Math.sin(t * 0.28) * 0.05);
+      const sunY = h * 0.28 + Math.sin(t * 0.42) * 8;
+      const orb = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, h * 0.34);
+      orb.addColorStop(0, `${p.sun}ee`);
+      orb.addColorStop(0.18, `${p.sun}55`);
+      orb.addColorStop(1, 'transparent');
+      ctx.fillStyle = orb;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.save();
+      ctx.strokeStyle = `${p.line}88`;
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 16; i += 1) {
+        const y = horizon + i * i * 1.75 + ((t * 22) % 18);
+        if (y > h) continue;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+      for (let i = -12; i <= 12; i += 1) {
+        const x = w / 2 + i * 44;
+        ctx.beginPath();
+        ctx.moveTo(w / 2, horizon);
+        ctx.lineTo(x + i * 32, h);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      const ground = ctx.createLinearGradient(0, horizon, 0, h);
+      ground.addColorStop(0, 'rgba(0,0,0,0.1)');
+      ground.addColorStop(1, `${p.line}20`);
+      ctx.fillStyle = ground;
+      ctx.fillRect(0, horizon, w, h - horizon);
+    },
+
+    drawStructures(ctx, w, h, p, t) {
+      ctx.save();
+      ctx.lineWidth = 2;
+      const baseY = h * 0.61;
+      const buildings = [0.13, 0.24, 0.72, 0.84];
+      buildings.forEach((pos, index) => {
+        const bw = w * (0.08 + index * 0.012);
+        const bh = h * (0.2 + (index % 2) * 0.12);
+        const x = w * pos;
+        const y = baseY - bh + Math.sin(t + index) * 4;
+        ctx.fillStyle = 'rgba(0,0,0,0.38)';
+        ctx.strokeStyle = index % 2 ? p.accent : p.line;
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = ctx.strokeStyle;
+        ctx.beginPath();
+        ctx.rect(x, y, bw, bh);
+        ctx.fill();
+        ctx.stroke();
+        for (let row = 0; row < 5; row += 1) {
+          ctx.beginPath();
+          ctx.moveTo(x + 8, y + row * 18 + 14);
+          ctx.lineTo(x + bw - 8, y + row * 18 + 14);
+          ctx.stroke();
+        }
+      });
+
+      ctx.shadowBlur = 22;
+      ctx.strokeStyle = p.sun;
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      for (let i = 0; i < 3; i += 1) {
+        const cx = w * (0.42 + i * 0.08);
+        const cy = h * 0.43 + Math.sin(t * 1.2 + i) * 9;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, 36, 12, Math.sin(t + i) * 0.1, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy + 12);
+        ctx.lineTo(cx - 24 + Math.sin(t * 2 + i) * 8, h * 0.67);
+        ctx.lineTo(cx + 24 + Math.cos(t * 2 + i) * 8, h * 0.67);
+        ctx.closePath();
+        ctx.strokeStyle = `${p.sun}66`;
+        ctx.stroke();
+        ctx.strokeStyle = p.sun;
+      }
+      ctx.restore();
+    },
+
+    drawStylePass(ctx, w, h, p, t) {
+      if (this.style === 'retro') {
+        ctx.save();
+        ctx.globalAlpha = 0.28;
+        ctx.fillStyle = '#000';
+        for (let y = 0; y < h; y += 5) ctx.fillRect(0, y, w, 2);
+        ctx.globalAlpha = 0.12 + Math.sin(t * 7) * 0.04;
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, (t * 38) % h, w, 18);
+        ctx.restore();
+      } else if (this.style === 'comic') {
+        ctx.save();
+        ctx.globalAlpha = 0.24;
+        ctx.fillStyle = '#000';
+        for (let y = 0; y < h; y += 8) {
+          for (let x = (y % 16); x < w; x += 16) {
+            ctx.beginPath();
+            ctx.arc(x, y, 1.6, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        ctx.globalAlpha = 0.35;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(10, 10, w - 20, h - 20);
+        ctx.restore();
+      } else {
+        ctx.save();
+        ctx.globalAlpha = 0.42;
+        ctx.strokeStyle = p.accent;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(w * 0.5, h * 0.48, 58 + Math.sin(t * 2) * 5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(w * 0.5 - 80, h * 0.48);
+        ctx.lineTo(w * 0.5 + 80, h * 0.48);
+        ctx.moveTo(w * 0.5, h * 0.48 - 80);
+        ctx.lineTo(w * 0.5, h * 0.48 + 80);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+  };
+
+  WorldPortal.init();
+
+
   function initWebcam() {
     // Kept for navigation trigger support without breaking step bindings
   }
@@ -1106,6 +1325,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const style = card.getAttribute('data-style');
       state.style = style;
+      WorldPortal.setStyle(style);
 
       if (activeStyleBadge) {
         activeStyleBadge.className = `badge ${style}`;
@@ -1231,7 +1451,8 @@ document.addEventListener('DOMContentLoaded', () => {
         activeStyleBadge.className = 'badge';
         activeStyleBadge.textContent = 'NINGUNO';
       }
-      if (cameraContainer) cameraContainer.className = 'camera-simulation-container';
+      if (cameraContainer) cameraContainer.className = 'camera-simulation-container vr-mode-simulation';
+      WorldPortal.setStyle('comic');
 
       if (audioPromptOverlay) audioPromptOverlay.classList.remove('hidden');
       if (oscFrequencyDisplay) oscFrequencyDisplay.textContent = 'FREQ: ---';

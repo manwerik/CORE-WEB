@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="index.css?v=3.2">
+  <link rel="stylesheet" href="index.css?v=3.3">
 </head>
 <body>
   <!-- Custom Cursor -->
@@ -505,7 +505,7 @@
                 <span id="active-style-badge" class="badge">NINGUNO</span>
               </div>
               <div class="camera-simulation-container vr-mode-simulation" id="camera-container">
-                <img src="assets/room_style.jpg" alt="Vista VR de la Sala" class="vr-room-image" id="vr-preview-image">
+                <canvas class="vr-world-canvas" id="vr-world-canvas" aria-label="Mundo visual generativo en estilos comic, retro y sci-fi"></canvas>
                 <div class="vr-retro-scanlines"></div>
                 <div class="vr-goggles-overlay" id="vr-goggles-trigger">
                   <div class="vr-goggles-icon">
@@ -715,6 +715,6 @@
 
   </main>
   
-  <script src="index.js?v=3.2"></script>
+  <script src="index.js?v=3.3"></script>
 </body>
 </html>
