@@ -1101,8 +1101,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!this.canvas) return;
       const parent = this.canvas.parentElement;
       const ratio = Math.min(window.devicePixelRatio || 1, 1.75);
-      const width = parent ? parent.clientWidth : 900;
-      const height = parent ? parent.clientHeight : 380;
+      const width = parent && parent.clientWidth ? parent.clientWidth : 900;
+      const height = parent && parent.clientHeight ? parent.clientHeight : 380;
       this.canvas.width = Math.max(1, Math.floor(width * ratio));
       this.canvas.height = Math.max(1, Math.floor(height * ratio));
       this.canvas.style.width = `${width}px`;
@@ -1112,6 +1112,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setStyle(style) {
       this.style = style || 'comic';
+      this.resize();
+      this.draw();
     },
 
     animate() {
@@ -1298,13 +1300,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   function initWebcam() {
-    // Kept for navigation trigger support without breaking step bindings
+    WorldPortal.resize();
+    WorldPortal.draw();
   }
 
   if (vrGogglesTrigger) {
     vrGogglesTrigger.addEventListener('click', () => {
       if (cameraContainer) {
         cameraContainer.classList.add('vr-active');
+        WorldPortal.resize();
+        WorldPortal.draw();
       }
     });
   }
@@ -1336,6 +1341,8 @@ document.addEventListener('DOMContentLoaded', () => {
         cameraContainer.classList.remove('filter-comic', 'filter-retro', 'filter-sci-fi');
         cameraContainer.classList.add(`filter-${style}`);
         cameraContainer.classList.add('vr-active');
+        WorldPortal.resize();
+        WorldPortal.draw();
       }
 
       btnToZoneNucleus.classList.remove('disabled');

@@ -1462,7 +1462,7 @@ h1.zone-title {
 
 @keyframes ring-pulse {
   0%, 100% { 
-    opacity: 0.45; 
+    opacity: 0.22; 
     transform: rotateX(76deg) translateZ(-85px) scale(0.96); 
     box-shadow: 0 0 25px var(--active-color), inset 0 0 15px var(--active-color);
   }
@@ -2831,8 +2831,9 @@ body, html, a, button, input, select, textarea, .frequency-card, .btn-audio-guid
   width: 100%;
   height: 100%;
   display: block;
-  opacity: 0.42;
-  filter: blur(16px) brightness(0.55) saturate(0.85);
+  opacity: 0.9;
+  z-index: 1;
+  filter: blur(8px) brightness(0.9) saturate(1.15);
   transform: scale(1.045);
   transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
@@ -2840,27 +2841,27 @@ body, html, a, button, input, select, textarea, .frequency-card, .btn-audio-guid
 
 .camera-simulation-container.vr-active .vr-world-canvas {
   opacity: 1;
-  filter: blur(0) brightness(1) saturate(1.1);
+  filter: blur(0) brightness(1.35) saturate(1.45);
   transform: scale(1);
 }
 
 .camera-simulation-container.vr-active.filter-comic .vr-world-canvas {
-  filter: contrast(1.35) saturate(1.45) brightness(1.02);
+  filter: contrast(1.45) saturate(1.65) brightness(1.25);
 }
 
 .camera-simulation-container.vr-active.filter-retro .vr-world-canvas {
-  filter: contrast(1.12) saturate(0.9) sepia(0.18) brightness(0.92);
+  filter: contrast(1.22) saturate(1.15) sepia(0.12) brightness(1.2);
 }
 
 .camera-simulation-container.vr-active.filter-sci-fi .vr-world-canvas {
-  filter: contrast(1.2) saturate(1.65) brightness(1.1);
+  filter: contrast(1.35) saturate(1.9) brightness(1.35);
 }
 
 .camera-simulation-container.vr-mode-simulation::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 38%, transparent 0 36%, rgba(0, 0, 0, 0.55) 100%);
+  background: radial-gradient(circle at 50% 38%, transparent 0 36%, rgba(0, 0, 0, 0.24) 100%);
   pointer-events: none;
   z-index: 2;
 }
